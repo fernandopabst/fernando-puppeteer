@@ -12,11 +12,10 @@ const CREDS = {
 
 const projectsFlowHttp = `https://prod-115.westeurope.logic.azure.com:443/workflows/a708e33306f54ec3ab2a58bb5acdf48d/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=DEsmfM-Ih5JQODA33xMMHTZ_V3ZjkTIXOZXHpc_0tt8`;
 
-const browserP = puppeteer.launch({
-  args: ["--no-sandbox", "--disable-setuid-sandbox"],
-});
-
 app.get("/", (req, res) => {
+  const browserP = puppeteer.launch({
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
   let page;
   (async () => {
     page = await (await browserP).newPage();
@@ -28,6 +27,9 @@ app.get("/", (req, res) => {
 });
 
 app.get("/projects/:id", (req, res) => {
+  const browserP = puppeteer.launch({
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
   let id = req.params.id;
   let page;
   (async () => {
@@ -151,7 +153,12 @@ app.get("/projects/:id", (req, res) => {
       .then((res) => {
         console.log(res);
       })
-      .then(() => res.send(responseObject));
+      .then(() =>
+        res.send(
+          `Project <b>${responseObject.varTitle}</b> uploaded to R&I Tracker`
+        )
+      )
+      .then(async () => await page.close());
   })()
     .catch((err) => {
       res.sendStatus(500);
