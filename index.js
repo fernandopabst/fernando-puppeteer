@@ -28,8 +28,7 @@ app.get("/", (req, res) => {
 
 app.get("/projects/:id", (req, res) => {
   const browserP = puppeteer.launch({
-    //args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    headless: false,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
   let id = req.params.id;
   let page;
