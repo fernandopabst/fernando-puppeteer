@@ -28,7 +28,8 @@ app.get("/", (req, res) => {
 
 app.get("/projects/:id", (req, res) => {
   const browserP = puppeteer.launch({
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    //args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    headless: false,
   });
   let id = req.params.id;
   let page;
@@ -157,14 +158,16 @@ app.get("/projects/:id", (req, res) => {
         res.send(
           `Project <b>${responseObject.varTitle}</b> uploaded to R&I Tracker`
         )
-      )
-      .then(async () => await page.close());
+      );
   })()
     .catch((err) => {
       res.sendStatus(500);
       console.log(err);
     })
-    .finally(async () => await page.close());
+    .finally(async () => {
+      await page.close();
+      await (await browserP).close();
+    });
 });
 
 app.listen(app.get("port"), () =>
