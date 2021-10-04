@@ -15,6 +15,7 @@ const CREDS = {
 };
 
 const projectsFlowHttp = `https://prod-115.westeurope.logic.azure.com:443/workflows/a708e33306f54ec3ab2a58bb5acdf48d/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=DEsmfM-Ih5JQODA33xMMHTZ_V3ZjkTIXOZXHpc_0tt8`;
+const pgrFlowHttp = `https://prod-13.westeurope.logic.azure.com:443/workflows/1704eb055b1240c68a0d116b5f840c8f/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=acXojhTRvrzDmTd8sU1B2lpki4HyVjb7nPG0WlIHXaQ`;
 
 app.get("/", (req, res) => {
   const browserP = puppeteer.launch({
@@ -393,7 +394,13 @@ app.get("/pgr/:id", (req, res) => {
         "Project end - Deadline (earliest)": result[137],
         "Project end - Deadline (latest)": result[138],
       };
-      res.send(resultObject);
+      axios
+        .post(pgrFlowHttp, responseObject)
+        .then(() =>
+          res.send(
+            `Student <b>${responseObject["Student ID"]}</b> uploaded to PGR Tracker`
+          )
+        );
     });
     fs.rmdirSync("./temp", { recursive: true });
   })()
