@@ -205,6 +205,10 @@ app.get("/pgr/:id", (req, res) => {
       }
     );
 
+    res
+      .status(200)
+      .send("Upload is queued. Please check CSSHSRI mailbox for updates");
+
     await page._client.send("Page.setDownloadBehavior", {
       behavior: "allow",
       downloadPath: downloadPath,
@@ -394,13 +398,7 @@ app.get("/pgr/:id", (req, res) => {
         "Project end - Deadline (earliest)": result[137],
         "Project end - Deadline (latest)": result[138],
       };
-      axios
-        .post(pgrFlowHttp, resultObject)
-        .then(() =>
-          res.send(
-            `Student <b>${resultObject["Student ID"]}</b> uploaded to PGR Tracker`
-          )
-        );
+      axios.post(pgrFlowHttp, resultObject);
     });
     fs.rmdirSync("./temp", { recursive: true });
   })()
