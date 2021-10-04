@@ -1,5 +1,10 @@
 const puppeteer = require("puppeteer");
 
+const readXlsxFile = require("read-excel-file/node");
+const path = require("path");
+var fs = require("fs");
+const downloadPath = path.resolve("./temp");
+
 // POST content of Flow HTTP action
 
 `{
@@ -2203,7 +2208,7 @@ function removeValueFromHiddenInput(inputId, val)
 
 // start of actual code
 
-const browserP = puppeteer.launch({});
+const browserP = puppeteer.launch({ headless: false });
 
 let page;
 const TestWithHtml = async () => {
@@ -2335,7 +2340,78 @@ const Test = async () => {
   console.log(responseObject);
 };
 
-Test()
+/* Test()
+  .catch((err) => {
+    console.log(err);
+  })
+  .finally(async () => await page.close()); */
+
+const Test2 = async (param) => {
+  page = await (await browserP).newPage();
+  await page.goto(
+    "https://research.cardiffmet.ac.uk/do/cardiffmet-auth/login?rdr=%2Fdo%2Factivity%2Fgraduate-school",
+    {
+      waitUntil: "networkidle0",
+    }
+  );
+
+  await page.type("#username", "sm23122");
+  await page.type("#password", "!Adentro7901541841");
+  await Promise.all([
+    page.click(
+      "#o > div > div > div > div > div > form > p:nth-child(5) > input[type=submit]"
+    ),
+    page.waitForNavigation({ waitUntil: "networkidle0" }),
+  ]);
+
+  await page.goto(
+    "https://research.cardiffmet.ac.uk/do/phd-doctoral-supervision/doctoral-researchers-dashboard/all",
+    {
+      waitUntil: "networkidle0",
+    }
+  );
+
+  await page._client.send("Page.setDownloadBehavior", {
+    behavior: "allow",
+    downloadPath: downloadPath,
+  });
+
+  await Promise.all([
+    page.click("#o > form > div.abe > input[type=submit]:nth-child(2)"),
+    //page.waitForNavigation({ waitUntil: "networkidle0", timeout: 0 }),
+  ]);
+
+  async function waitFile(filename) {
+    return new Promise(async (resolve, reject) => {
+      if (!fs.existsSync(filename)) {
+        await delay(3000);
+        await waitFile(filename);
+        resolve();
+      } else {
+        resolve();
+      }
+    });
+  }
+
+  let result;
+
+  function delay(time) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve, time);
+    });
+  }
+  await waitFile("./temp/Past_and_current_Doctoral_researchers_dashboard.xlsx");
+  readXlsxFile(
+    "./temp/Past_and_current_Doctoral_researchers_dashboard.xlsx"
+  ).then((rows) => {
+    result = rows.filter((item) => item.includes(param))[0];
+    console.log(result);
+  });
+  fs.rmdirSync("./temp", { recursive: true });
+  res.send(result);
+};
+
+Test2("20071058")
   .catch((err) => {
     console.log(err);
   })

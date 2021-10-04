@@ -1,6 +1,10 @@
 const express = require("express");
 const puppeteer = require("puppeteer");
 const axios = require("axios");
+const readXlsxFile = require("read-excel-file/node");
+const path = require("path");
+var fs = require("fs");
+const downloadPath = path.resolve("./temp");
 
 const app = express();
 app.set("port", process.env.PORT || 5000);
@@ -167,6 +171,236 @@ app.get("/projects/:id", (req, res) => {
       await page.close();
       await (await browserP).close();
     });
+});
+
+app.get("/pgr/:id", (req, res) => {
+  const browserP = puppeteer.launch({
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
+  let id = req.params.id;
+  let page;
+  (async () => {
+    page = await (await browserP).newPage();
+    await page.goto(
+      "https://research.cardiffmet.ac.uk/do/cardiffmet-auth/login?rdr=%2Fdo%2Factivity%2Fgraduate-school",
+      {
+        waitUntil: "networkidle0",
+      }
+    );
+
+    await page.type("#username", "sm23122");
+    await page.type("#password", CREDS.password);
+    await Promise.all([
+      page.click(
+        "#o > div > div > div > div > div > form > p:nth-child(5) > input[type=submit]"
+      ),
+      page.waitForNavigation({ waitUntil: "networkidle0" }),
+    ]);
+
+    await page.goto(
+      "https://research.cardiffmet.ac.uk/do/phd-doctoral-supervision/doctoral-researchers-dashboard/all",
+      {
+        waitUntil: "networkidle0",
+      }
+    );
+
+    await page._client.send("Page.setDownloadBehavior", {
+      behavior: "allow",
+      downloadPath: downloadPath,
+    });
+
+    await Promise.all([
+      page.click("#o > form > div.abe > input[type=submit]:nth-child(2)"),
+      //page.waitForNavigation({ waitUntil: "networkidle0", timeout: 0 }),
+    ]);
+
+    async function waitFile(filename) {
+      return new Promise(async (resolve, reject) => {
+        if (!fs.existsSync(filename)) {
+          await delay(3000);
+          await waitFile(filename);
+          resolve();
+        } else {
+          resolve();
+        }
+      });
+    }
+
+    let result;
+
+    function delay(time) {
+      return new Promise(function (resolve) {
+        setTimeout(resolve, time);
+      });
+    }
+    await waitFile(
+      "./temp/Past_and_current_Doctoral_researchers_dashboard.xlsx"
+    );
+    readXlsxFile(
+      "./temp/Past_and_current_Doctoral_researchers_dashboard.xlsx"
+    ).then((rows) => {
+      result = rows.filter((item) => item.includes(id))[0];
+      const resultObject = {
+        "Student ID": result[0],
+        Name: result[1],
+        Column1: result[2],
+        Column2: result[3],
+        School: result[4],
+        "Date of birth": result[5],
+        Gender: result[6],
+        "Country group": result[7],
+        Nation: result[8],
+        Ethnicity: result[9],
+        Disability: result[10],
+        "Past researcher": result[11],
+        DoS: result[12],
+        Column3: result[13],
+        Column4: result[14],
+        Start: result[15],
+        End: result[16],
+        Stage: result[17],
+        Status: result[18],
+        Email: result[19],
+        "Project title": result[20],
+        "Registration end": result[21],
+        Stage5: result[22],
+        "Fee status": result[23],
+        Mode: result[24],
+        Type: result[25],
+        "Director of studies": result[26],
+        Column6: result[27],
+        Column7: result[28],
+        "Director of studies (email)": result[29],
+        "Second (i)": result[30],
+        Column8: result[31],
+        Column9: result[32],
+        "Second (i) (email)": result[33],
+        "Second (ii)": result[34],
+        Column10: result[35],
+        Column11: result[36],
+        "Second (ii) (email)": result[37],
+        "Second (iii)": result[38],
+        Column12: result[39],
+        Column13: result[40],
+        "Second (iii) (email)": result[41],
+        Supervisor: result[42],
+        Column14: result[43],
+        Column15: result[44],
+        "Supervisor (email)": result[45],
+        "Project start": result[46],
+        "Project start - Deadline (earliest)": result[47],
+        "Project start - Deadline (latest)": result[48],
+        "Research degree proposal, submission": result[49],
+        "Research degree proposal, submission - Deadline (earliest)":
+          result[50],
+        "Research degree proposal, submission - Deadline (latest)": result[51],
+        "Research degree proposal, completion": result[52],
+        "Research degree proposal, completion - Deadline (earliest)":
+          result[53],
+        "Research degree proposal, completion - Deadline (latest)": result[54],
+        "Visa, start": result[55],
+        "Visa, start - Deadline (earliest)": result[56],
+        "Visa, start - Deadline (latest)": result[57],
+        "Visa, end": result[58],
+        "Visa, end - Deadline (earliest)": result[59],
+        "Visa, end - Deadline (latest)": result[60],
+        "Transfer, submission": result[61],
+        "Transfer, submission - Deadline (earliest)": result[62],
+        "Transfer, submission - Deadline (latest)": result[63],
+        "Transfer, completion": result[64],
+        "Transfer, completion - Deadline (earliest)": result[65],
+        "Transfer, completion - Deadline (latest)": result[66],
+        "Examination arrangements, submission": result[67],
+        "Examination arrangements, submission - Deadline (earliest)":
+          result[68],
+        "Examination arrangements, submission - Deadline (latest)": result[69],
+        "Examination arrangements, completion": result[70],
+        "Examination arrangements, completion - Deadline (earliest)":
+          result[71],
+        "Examination arrangements, completion - Deadline (latest)": result[72],
+        "Examination, submission": result[73],
+        "Examination, submission - Deadline (earliest)": result[74],
+        "Examination, submission - Deadline (latest)": result[75],
+        "Examination, completion": result[76],
+        "Examination, completion - Deadline (earliest)": result[77],
+        "Examination, completion - Deadline (latest)": result[78],
+        "Examination, thesis sent": result[79],
+        "Examination, thesis sent - Deadline (earliest)": result[80],
+        "Examination, thesis sent - Deadline (latest)": result[81],
+        "Examination, no amendments": result[82],
+        "Examination, no amendments - Deadline (earliest)": result[83],
+        "Examination, no amendments - Deadline (latest)": result[84],
+        "Examination, minor amendments": result[85],
+        "Examination, minor amendments - Deadline (earliest)": result[86],
+        "Examination, minor amendments - Deadline (latest)": result[87],
+        "Examination, resubmission": result[88],
+        "Examination, resubmission - Deadline (earliest)": result[89],
+        "Examination, resubmission - Deadline (latest)": result[90],
+        "Examination, revisions": result[91],
+        "Examination, revisions - Deadline (earliest)": result[92],
+        "Examination, revisions - Deadline (latest)": result[93],
+        "Examination, viva": result[94],
+        "Examination, viva - Deadline (earliest)": result[95],
+        "Examination, viva - Deadline (latest)": result[96],
+        "Writing up": result[97],
+        "Writing up - Deadline (earliest)": result[98],
+        "Writing up - Deadline (latest)": result[99],
+        "Extension to programme, submission": result[100],
+        "Extension to programme, submission - Deadline (earliest)": result[101],
+        "Extension to programme, submission - Deadline (latest)": result[102],
+        "Change project mode, submission": result[103],
+        "Change project mode, submission - Deadline (earliest)": result[104],
+        "Change project mode, submission - Deadline (latest)": result[105],
+        "Change resumption, submission": result[106],
+        "Change resumption, submission - Deadline (earliest)": result[107],
+        "Change resumption, submission - Deadline (latest)": result[108],
+        "Change supervisors, submission": result[109],
+        "Change supervisors, submission - Deadline (earliest)": result[110],
+        "Change supervisors, submission - Deadline (latest)": result[111],
+        "Suspension from programme, submission": result[112],
+        "Suspension from programme, submission - Deadline (earliest)":
+          result[113],
+        "Suspension from programme, submission - Deadline (latest)":
+          result[114],
+        "Withdrawal from programme, submission": result[115],
+        "Withdrawal from programme, submission - Deadline (earliest)":
+          result[116],
+        "Withdrawal from programme, submission - Deadline (latest)":
+          result[117],
+        "Extension to programme, completion": result[118],
+        "Extension to programme, completion - Deadline (earliest)": result[119],
+        "Extension to programme, completion - Deadline (latest)": result[120],
+        "Change project mode, completion": result[121],
+        "Change project mode, completion - Deadline (earliest)": result[122],
+        "Change project mode, completion - Deadline (latest)": result[123],
+        "Change resumption, completion": result[124],
+        "Change resumption, completion - Deadline (earliest)": result[125],
+        "Change resumption, completion - Deadline (latest)": result[126],
+        "Change supervisors, completion": result[127],
+        "Change supervisors, completion - Deadline (earliest)": result[128],
+        "Change supervisors, completion - Deadline (latest)": result[129],
+        "Suspension from programme, completion": result[130],
+        "Suspension from programme, completion - Deadline (earliest)":
+          result[131],
+        "Suspension from programme, completion - Deadline (latest)":
+          result[132],
+        "Withdrawal from programme, completion": result[133],
+        "Withdrawal from programme, completion - Deadline (earliest)":
+          result[134],
+        "Withdrawal from programme, completion - Deadline (latest)":
+          result[135],
+        "Project end": result[136],
+        "Project end - Deadline (earliest)": result[137],
+        "Project end - Deadline (latest)": result[138],
+      };
+      res.send(resultObject);
+    });
+    fs.rmdirSync("./temp", { recursive: true });
+  })()
+    .catch((err) => {
+      console.log(err);
+    })
+    .finally(async () => await page.close());
 });
 
 app.listen(app.get("port"), () =>
