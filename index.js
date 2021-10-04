@@ -395,10 +395,10 @@ app.get("/pgr/:id", (req, res) => {
         "Project end - Deadline (latest)": result[138],
       };
       axios
-        .post(pgrFlowHttp, responseObject)
+        .post(pgrFlowHttp, resultObject)
         .then(() =>
           res.send(
-            `Student <b>${responseObject["Student ID"]}</b> uploaded to PGR Tracker`
+            `Student <b>${resultObject["Student ID"]}</b> uploaded to PGR Tracker`
           )
         );
     });
