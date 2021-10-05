@@ -178,7 +178,9 @@ app.get("/pgr/:id", (req, res) => {
   const browserP = puppeteer.launch({
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
+  console.log("puppeteer launched");
   let id = req.params.id;
+  console.log(`looking for ${id}`);
   let page;
   (async () => {
     page = await (await browserP).newPage();
@@ -197,6 +199,7 @@ app.get("/pgr/:id", (req, res) => {
       ),
       page.waitForNavigation({ waitUntil: "networkidle0" }),
     ]);
+    console.log("logged in");
 
     await page.goto(
       "https://research.cardiffmet.ac.uk/do/phd-doctoral-supervision/doctoral-researchers-dashboard/all",
@@ -209,23 +212,31 @@ app.get("/pgr/:id", (req, res) => {
       .status(200)
       .send("Upload is queued. Please check CSSHSRI mailbox for updates");
 
+    console.log(
+      "🚀 ~ file: index.js ~ line 215 ~ path.join(__dirname, `../temp${id}`",
+      path.join(__dirname, `../temp${id}`)
+    );
+
     await page._client.send("Page.setDownloadBehavior", {
       behavior: "allow",
       downloadPath: path.join(__dirname, `../temp${id}`),
     });
+    console.log("download behaviour set");
 
     await Promise.all([
       page.click("#o > form > div.abe > input[type=submit]:nth-child(2)"),
       //page.waitForNavigation({ waitUntil: "networkidle0", timeout: 0 }),
     ]);
-
+    console.log("download button activated");
     async function waitFile(filename) {
       return new Promise(async (resolve, reject) => {
         if (!fs.existsSync(filename)) {
+          console.log("file still not found. searching again");
           await delay(3000);
           await waitFile(filename);
           resolve();
         } else {
+          console.log("file found");
           resolve();
         }
       });
@@ -243,6 +254,12 @@ app.get("/pgr/:id", (req, res) => {
         __dirname,
         `../temp${id}/Past_and_current_Doctoral_researchers_dashboard.xlsx`
       )
+    );
+    console.log(
+      `reading file ${path.join(
+        __dirname,
+        `../temp${id}/Past_and_current_Doctoral_researchers_dashboard.xlsx`
+      )}`
     );
     readXlsxFile(
       path.join(
@@ -404,7 +421,10 @@ app.get("/pgr/:id", (req, res) => {
         "Project end - Deadline (earliest)": result[137],
         "Project end - Deadline (latest)": result[138],
       };
-      axios.post(pgrFlowHttp, resultObject);
+      console.log(responseObject);
+      axios
+        .post(pgrFlowHttp, resultObject)
+        .catch((e) => console.log(e.message));
     });
     fs.rmdirSync(path.join(__dirname, `../temp${id}`), { recursive: true });
   })()
