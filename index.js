@@ -214,12 +214,12 @@ app.get("/pgr/:id", (req, res) => {
 
     console.log(
       "🚀 ~ file: index.js ~ line 215 ~ path.join(__dirname, `../temp${id}`",
-      path.join(__dirname, `../temp${id}`)
+      path.join(__dirname, `/app/temp${id}`)
     );
 
     await page._client.send("Page.setDownloadBehavior", {
       behavior: "allow",
-      downloadPath: path.join(__dirname, `../temp${id}`),
+      downloadPath: path.join(__dirname, `/app/temp${id}`),
     });
     console.log("download behaviour set");
 
@@ -252,19 +252,19 @@ app.get("/pgr/:id", (req, res) => {
     await waitFile(
       path.join(
         __dirname,
-        `../temp${id}/Past_and_current_Doctoral_researchers_dashboard.xlsx`
+        `/app/temp${id}/Past_and_current_Doctoral_researchers_dashboard.xlsx`
       )
     );
     console.log(
       `reading file ${path.join(
         __dirname,
-        `../temp${id}/Past_and_current_Doctoral_researchers_dashboard.xlsx`
+        `/app/temp${id}/Past_and_current_Doctoral_researchers_dashboard.xlsx`
       )}`
     );
     readXlsxFile(
       path.join(
         __dirname,
-        `../temp${id}/Past_and_current_Doctoral_researchers_dashboard.xlsx`
+        `/app/temp${id}/Past_and_current_Doctoral_researchers_dashboard.xlsx`
       )
     ).then((rows) => {
       result = rows.filter((item) => item.includes(id))[0];
@@ -426,7 +426,7 @@ app.get("/pgr/:id", (req, res) => {
         .post(pgrFlowHttp, resultObject)
         .catch((e) => console.log(e.message));
     });
-    fs.rmdirSync(path.join(__dirname, `../temp${id}`), { recursive: true });
+    fs.rmdirSync(path.join(__dirname, `/app/temp${id}`), { recursive: true });
   })()
     .catch((err) => {
       console.log(err);
