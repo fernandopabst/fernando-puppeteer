@@ -421,7 +421,7 @@ app.get("/pgr/:id", (req, res) => {
         "Project end - Deadline (earliest)": result[137],
         "Project end - Deadline (latest)": result[138],
       };
-      console.log(responseObject);
+      console.log(resultObject);
       axios
         .post(pgrFlowHttp, resultObject)
         .catch((e) => console.log(e.message));
