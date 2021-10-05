@@ -431,7 +431,10 @@ app.get("/pgr/:id", (req, res) => {
     .catch((err) => {
       console.log(err);
     })
-    .finally(async () => await page.close());
+    .finally(async () => {
+      await page.close();
+      await (await browserP).close();
+    });
 });
 
 app.listen(app.get("port"), () =>
