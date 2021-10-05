@@ -189,7 +189,7 @@ app.get("/pgr/:id", (req, res) => {
       }
     );
 
-    await page.type("#username", "sm23122");
+    await page.type("#username", CREDS.login);
     await page.type("#password", CREDS.password);
     await Promise.all([
       page.click(
@@ -211,7 +211,7 @@ app.get("/pgr/:id", (req, res) => {
 
     await page._client.send("Page.setDownloadBehavior", {
       behavior: "allow",
-      downloadPath: downloadPath,
+      downloadPath: path.join(__dirname, `../temp${id}`),
     });
 
     await Promise.all([
@@ -239,10 +239,16 @@ app.get("/pgr/:id", (req, res) => {
       });
     }
     await waitFile(
-      "./temp/Past_and_current_Doctoral_researchers_dashboard.xlsx"
+      path.join(
+        __dirname,
+        `../temp${id}/Past_and_current_Doctoral_researchers_dashboard.xlsx`
+      )
     );
     readXlsxFile(
-      "./temp/Past_and_current_Doctoral_researchers_dashboard.xlsx"
+      path.join(
+        __dirname,
+        `../temp${id}/Past_and_current_Doctoral_researchers_dashboard.xlsx`
+      )
     ).then((rows) => {
       result = rows.filter((item) => item.includes(id))[0];
       const resultObject = {
@@ -400,7 +406,7 @@ app.get("/pgr/:id", (req, res) => {
       };
       axios.post(pgrFlowHttp, resultObject);
     });
-    fs.rmdirSync("./temp", { recursive: true });
+    fs.rmdirSync(path.join(__dirname, `../temp${id}`), { recursive: true });
   })()
     .catch((err) => {
       console.log(err);
