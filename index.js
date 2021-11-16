@@ -51,6 +51,7 @@ app.get("/projects/:id", (req, res) => {
       varContent: null,
       varContentHPL: null,
       varID: null,
+      varCostCode: null,
       summary: null,
     };
 
@@ -148,6 +149,13 @@ app.get("/projects/:id", (req, res) => {
       () =>
         document.querySelector(
           "#form > div:nth-child(10) > div:nth-child(1) > div > div.card-body > div:nth-child(18) > input"
+        ).value
+    );
+
+    responseObject.varCostCode = await page.evaluate(
+      () =>
+        document.querySelector(
+          "#form > div:nth-child(10) > div:nth-child(1) > div > div.card-body > div:nth-child(5) > input"
         ).value
     );
 
