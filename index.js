@@ -3,11 +3,13 @@ const puppeteer = require("puppeteer");
 const axios = require("axios");
 const readXlsxFile = require("read-excel-file/node");
 const path = require("path");
+var cors = require('cors');
 var fs = require("fs");
 const downloadPath = path.resolve("./temp");
 
 const app = express();
 app.set("port", process.env.PORT || 5000);
+app.use(cors());
 
 const CREDS = {
   login: "sm23122",
