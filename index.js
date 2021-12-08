@@ -182,6 +182,157 @@ app.get("/projects/:id", (req, res) => {
     });
 });
 
+app.get("/riscap/:id", (req, res) => {
+  const browserP = puppeteer.launch({
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
+  let id = req.params.id;
+  let page;
+  (async () => {
+    let responseObject = {
+      varClient: null,
+      varContribution: null,
+      varDuration: null,
+      varIncome: null,
+      varRIDS: null,
+      varStart: null,
+      varTitle: null,
+      varStatus: null,
+      varType: null,
+      //varContent: null,
+      //varContentHPL: null,
+      varID: null,
+      varCostCode: null,
+      summary: null,
+    };
+
+    page = await (await browserP).newPage();
+    await page.goto("https://cis2.cardiffmet.ac.uk/CostingAndPricing/", {
+      waitUntil: "networkidle0",
+    });
+
+    await page.type("#userNameInput", CREDS.login);
+    await page.type("#passwordInput", CREDS.password);
+    await Promise.all([
+      page.click("#submitButton"),
+      page.waitForNavigation({ waitUntil: "networkidle0" }),
+    ]);
+
+    /* await page.goto(
+      `https://cis2.cardiffmet.ac.uk/CostingAndPricing/projects/${id}/edit/personnel`,
+      {
+        waitUntil: "networkidle0",
+      }
+    );
+
+    //const cookies = await page.cookies();
+
+    const pageContent = await page.content();
+
+    const positionStart = pageContent.indexOf(`id="staffTimeTable"`);
+    const positionEnd = pageContent.indexOf(`table-remove-staffCost`);
+    const extracted = pageContent.substring(positionStart, positionEnd);
+    const blitzed = extracted.replace(/["]/gi, "blitz");
+
+    responseObject.varContent = blitzed;
+
+    const positionStartHPL = pageContent.indexOf(`id="hplCoverTable"`);
+    const positionEndHPL = pageContent.indexOf(`"table-remove-staffCost hpl"`);
+    const extractedHPL = pageContent.substring(
+      positionStartHPL,
+      positionEndHPL
+    );
+    const blitzedHPL = extractedHPL.replace(/["]/gi, "blitz");
+
+    responseObject.varContentHPL = blitzedHPL; */
+
+    await page.goto(
+      `https://cis2.cardiffmet.ac.uk/CostingAndPricing/projects/${id}/edit/details`,
+      {
+        waitUntil: "networkidle0",
+      }
+    );
+
+    responseObject.varStatus = await page.evaluate(
+      () =>
+        document.querySelector("#form > div:nth-child(6) > div > div > input")
+          .value
+    );
+
+    responseObject.summary = await page.evaluate(
+      () => document.querySelector("#summary").innerHTML
+    );
+    responseObject.varTitle = await page.evaluate(
+      () => document.querySelector("#name").value
+    );
+    responseObject.varClient = await page.evaluate(
+      () => document.querySelector("#client").value
+    );
+    responseObject.varStart = await page.evaluate(
+      () => document.querySelector("#startDate").value
+    );
+    responseObject.varDuration = await page.evaluate(
+      () => document.querySelector("#estimatedDurationInMonths").value
+    );
+    responseObject.varType = await page.evaluate(
+      () => document.querySelector("#projectType").selectedOptions[0].label
+    );
+
+    await page.goto(
+      `https://cis2.cardiffmet.ac.uk/CostingAndPricing/projects/${id}/edit/summary`,
+      {
+        waitUntil: "networkidle0",
+      }
+    );
+    responseObject.varIncome = await page.evaluate(
+      () =>
+        document.querySelector(
+          "#form > div:nth-child(10) > div:nth-child(1) > div > div.card-body > div:nth-child(8) > input"
+        ).value
+    );
+    responseObject.varContribution = await page.evaluate(
+      () =>
+        document.querySelector(
+          "#form > div:nth-child(10) > div:nth-child(1) > div > div.card-body > div:nth-child(16) > input"
+        ).value
+    );
+    responseObject.varRIDS = await page.evaluate(
+      () =>
+        document.querySelector(
+          "#form > div:nth-child(10) > div:nth-child(1) > div > div.card-body > div:nth-child(18) > input"
+        ).value
+    );
+
+    responseObject.varCostCode = await page.evaluate(
+      () =>
+        document.querySelector(
+          "#form > div:nth-child(10) > div:nth-child(1) > div > div.card-body > div:nth-child(5) > input"
+        ).value
+    );
+
+    responseObject.varID = id;
+    await res.send(responseObject);
+    /* axios
+      .post(projectsFlowHttp, responseObject)
+      .then((res) => {
+        console.log(res);
+      })
+      .then(() =>
+        res.send(
+          `Project <b>${responseObject.varTitle}</b> uploaded to R&I Tracker`
+        )
+      ); */
+  })()
+    .catch((err) => {
+      res.sendStatus(500);
+      console.log(err);
+    })
+    .finally(async () => {
+      await page.close();
+      await (await browserP).close();
+    });
+});
+
 app.get("/pgr/:id", (req, res) => {
   const browserP = puppeteer.launch({
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
