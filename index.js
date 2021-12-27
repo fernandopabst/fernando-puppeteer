@@ -3,9 +3,10 @@ const puppeteer = require("puppeteer");
 const axios = require("axios");
 const readXlsxFile = require("read-excel-file/node");
 const path = require("path");
-var cors = require('cors');
+var cors = require("cors");
 var fs = require("fs");
 const downloadPath = path.resolve("./temp");
+const { resSketch } = require("./util");
 
 const app = express();
 app.set("port", process.env.PORT || 5000);
@@ -31,6 +32,45 @@ app.get("/", (req, res) => {
   })()
     .catch((err) => res.sendStatus(500))
     .finally(async () => await page.close());
+});
+
+app.get("/voxel", (req, res) => {
+  const gen = resSketch(
+    { x: 16, y: 16, z: 16 },
+    { padFrac: 0.1 },
+    (scene, ops) => {
+      // ops.fillScene(scene); // uncomment for nice variation
+      for (let i = 0; i < 1000; i++) {
+        ops.randomBox(scene, Math.random() < 0.85 ? 0 : 1);
+      }
+    }
+  );
+  res.send(gen);
+});
+
+app.get("/screenshot/:url", (req, res) => {
+  const browserP = puppeteer.launch({
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    defaultViewport: { width: 800, height: 600, deviceScaleFactor: 0.5 },
+  });
+  let url = req.params.url;
+  let page;
+  (async () => {
+    page = await (await browserP).newPage();
+    await page.goto(url, {
+      waitUntil: "networkidle0",
+    });
+    const b64string = await page.screenshot({ encoding: "base64" });
+    res.send(b64string);
+  })()
+    .catch((err) => {
+      res.sendStatus(500);
+      console.log(err);
+    })
+    .finally(async () => {
+      await page.close();
+      await (await browserP).close();
+    });
 });
 
 app.get("/projects/:id", (req, res) => {
