@@ -12,6 +12,23 @@ const app = express();
 app.set("port", process.env.PORT || 5000);
 app.use(cors());
 
+//
+const http = require("http");
+const server = http.createServer(app);
+const WebSocket = require("ws");
+const wss = new WebSocket.Server({ noServer: true });
+const setupWSConnection = require("./utils.js").setupWSConnection;
+
+wss.on("connection", setupWSConnection);
+
+server.on("upgrade", function (request, socket, head) {
+  wss.handleUpgrade(request, socket, head, function (ws) {
+    wss.emit("connection", ws, request);
+  });
+});
+
+//
+
 const CREDS = {
   login: "sm23122",
   password: "!Adentro7901541841",
@@ -638,6 +655,6 @@ app.get("/pgr/:id", (req, res) => {
     });
 });
 
-app.listen(app.get("port"), () =>
+server.listen(app.get("port"), () =>
   console.log("app running on port", app.get("port"))
 );
