@@ -7,6 +7,7 @@ var cors = require("cors");
 var fs = require("fs");
 const downloadPath = path.resolve("./temp");
 const { resSketch } = require("./util");
+const tabletojson = require("tabletojson").Tabletojson;
 
 const app = express();
 app.set("port", process.env.PORT || 5000);
@@ -36,6 +37,7 @@ const CREDS = {
 
 const projectsFlowHttp = `https://prod-115.westeurope.logic.azure.com:443/workflows/a708e33306f54ec3ab2a58bb5acdf48d/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=DEsmfM-Ih5JQODA33xMMHTZ_V3ZjkTIXOZXHpc_0tt8`;
 const pgrFlowHttp = `https://prod-13.westeurope.logic.azure.com:443/workflows/1704eb055b1240c68a0d116b5f840c8f/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=acXojhTRvrzDmTd8sU1B2lpki4HyVjb7nPG0WlIHXaQ`;
+const scheduledProjectsFlowHttp = `https://prod-166.westeurope.logic.azure.com:443/workflows/6b5b9091f6264b9ba0baafb1b5329d5f/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=MmYPo9aTKwTUJj8sEDZ93-1nPp6JLAUQ3L3XJdhuWqI`;
 
 app.get("/", (req, res) => {
   const browserP = puppeteer.launch({
@@ -230,6 +232,183 @@ app.get("/projects/:id", (req, res) => {
           `Project <b>${responseObject.varTitle}</b> uploaded to R&I Tracker`
         )
       );
+  })()
+    .catch((err) => {
+      res.sendStatus(500);
+      console.log(err);
+    })
+    .finally(async () => {
+      await page.close();
+      await (await browserP).close();
+    });
+});
+
+app.get("/scheduled-projects", (req, res) => {
+  const browserP = puppeteer.launch({
+    //headless: false,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
+  let page;
+  (async () => {
+    let responseObject = {
+      CSESP: null,
+      CSAD: null,
+      CSM: null,
+      CST: null,
+      CSSHS: null,
+      PDR: null,
+    };
+
+    page = await (await browserP).newPage();
+    const navigationPromise = page.waitForNavigation();
+    await page.goto("https://cis2.cardiffmet.ac.uk/CostingAndPricing/", {
+      waitUntil: "networkidle0",
+    });
+
+    await page.type("#userNameInput", CREDS.login);
+    await page.type("#passwordInput", CREDS.password);
+    await Promise.all([
+      page.click("#submitButton"),
+      page.waitForNavigation({ waitUntil: "networkidle0" }),
+    ]);
+
+    await page.goto(
+      `https://cis2.cardiffmet.ac.uk/CostingAndPricing/projects`,
+      {
+        waitUntil: "networkidle0",
+      }
+    );
+
+    await page.select("#schoolOrUnitId", "1"); // CSESP
+    await page.click("form > .row > .col-md-12 > .form-inline > .btn");
+    await page.waitFor(1000);
+
+    /*  const data = await page.$$eval("table tr td", (tds) =>
+      tds.map((td) => {
+        if (td.innerHTML.includes("a href"))
+          return [td.innerHTML.split("/")[5], td.innerText];
+        return td.innerText;
+      })
+    );
+
+    const result = await page.$$eval("table tr", (rows) => {
+      return Array.from(rows, (row) => {
+        const columns = row.querySelectorAll("td");
+        return Array.from(columns, (column) => {
+          if (column.innerHTML.includes("a href")) {
+            const obj = {
+              id: column.innerHTML.split("/")[5],
+              title: column.innerText,
+            };
+            return obj;
+          }
+          return column.innerText;
+        });
+      });
+    }); */
+
+    let pageContent = await page.content();
+    let converted = tabletojson.convert(pageContent, {
+      stripHtmlFromCells: false,
+    });
+    let modified = converted[0].map((c) => ({
+      id: parseInt(c["Project Title"].split("/")[5]),
+      title: c["Project Title"].replace(/<[^>]+>/g, ""),
+      ...c,
+    }));
+    responseObject.CSESP = modified;
+
+    await page.select("#schoolOrUnitId", "2"); // CSAD
+    await page.click("form > .row > .col-md-12 > .form-inline > .btn");
+    await page.waitFor(1000);
+
+    pageContent = await page.content();
+    converted = tabletojson.convert(pageContent, { stripHtmlFromCells: false });
+    modified = converted[0].map((c) => ({
+      id: parseInt(c["Project Title"].split("/")[5]),
+      title: c["Project Title"].replace(/<[^>]+>/g, ""),
+      ...c,
+    }));
+    responseObject.CSAD = modified;
+
+    await page.select("#schoolOrUnitId", "3"); // CSM
+    await page.click("form > .row > .col-md-12 > .form-inline > .btn");
+    await page.waitFor(1000);
+
+    pageContent = await page.content();
+    converted = tabletojson.convert(pageContent, { stripHtmlFromCells: false });
+    modified = converted[0].map((c) => ({
+      id: parseInt(c["Project Title"].split("/")[5]),
+      title: c["Project Title"].replace(/<[^>]+>/g, ""),
+      ...c,
+    }));
+    responseObject.CSM = modified;
+
+    await page.select("#schoolOrUnitId", "4"); // CST
+    await page.click("form > .row > .col-md-12 > .form-inline > .btn");
+    await page.waitFor(1000);
+
+    pageContent = await page.content();
+    converted = tabletojson.convert(pageContent, { stripHtmlFromCells: false });
+    modified = converted[0].map((c) => ({
+      id: parseInt(c["Project Title"].split("/")[5]),
+      title: c["Project Title"].replace(/<[^>]+>/g, ""),
+      ...c,
+    }));
+    responseObject.CST = modified;
+
+    await page.select("#schoolOrUnitId", "5"); // CSSHS
+    await page.click("form > .row > .col-md-12 > .form-inline > .btn");
+    await page.waitFor(1000);
+
+    pageContent = await page.content();
+    converted = tabletojson.convert(pageContent, { stripHtmlFromCells: false });
+    modified = converted[0].map((c) => ({
+      id: parseInt(c["Project Title"].split("/")[5]),
+      title: c["Project Title"].replace(/<[^>]+>/g, ""),
+      ...c,
+    }));
+    responseObject.CSSHS = modified;
+
+    await page.select("#schoolOrUnitId", "6"); // PDR
+    await page.click("form > .row > .col-md-12 > .form-inline > .btn");
+    await page.waitFor(1000);
+
+    pageContent = await page.content();
+    converted = tabletojson.convert(pageContent, { stripHtmlFromCells: false });
+    modified = converted[0].map((c) => ({
+      id: parseInt(c["Project Title"].split("/")[5]),
+      title: c["Project Title"].replace(/<[^>]+>/g, ""),
+      ...c,
+    }));
+    responseObject.PDR = modified;
+
+    const responseFiltered = [
+      responseObject.PDR,
+      responseObject.CSAD,
+      responseObject.CSESP,
+      responseObject.CST,
+      responseObject.CSM,
+      responseObject.CSSHS,
+    ].flat();
+    const final = responseFiltered.filter(
+      (item) => item.Status === "Project Live"
+    );
+
+    console.log(final);
+
+    await axios
+      .post(
+        scheduledProjectsFlowHttp,
+        { data: final },
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      )
+      .then((res) => {
+        console.log(res);
+      })
+      .then(() => res.send(final));
   })()
     .catch((err) => {
       res.sendStatus(500);
