@@ -19,6 +19,8 @@ const server = http.createServer(app);
 const WebSocket = require("ws");
 const wss = new WebSocket.Server({ noServer: true });
 const setupWSConnection = require("./utils.js").setupWSConnection;
+const dotenv = require("dotenv");
+dotenv.config();
 
 wss.on("connection", setupWSConnection);
 
@@ -31,8 +33,8 @@ server.on("upgrade", function (request, socket, head) {
 //
 
 const CREDS = {
-  login: "sm23122",
-  password: "!Adentro7901541841",
+  login: process.env.LOGIN,
+  password: process.env.PASSWORD,
 };
 
 const projectsFlowHttp = `https://prod-115.westeurope.logic.azure.com:443/workflows/a708e33306f54ec3ab2a58bb5acdf48d/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=DEsmfM-Ih5JQODA33xMMHTZ_V3ZjkTIXOZXHpc_0tt8`;
