@@ -141,15 +141,15 @@ app.get("/projects/:id", (req, res) => {
 
     const pageContent = await page.content();
 
-    const positionStart = pageContent.indexOf(`id="staffTimeTable"`);
-    const positionEnd = pageContent.indexOf(`table-remove-staffCost`);
+    const positionStart = pageContent.indexOf(`id="table_st"`);
+    const positionEnd = pageContent.indexOf(`id="staffCostIds_st_removed"`);
     const extracted = pageContent.substring(positionStart, positionEnd);
     const blitzed = extracted.replace(/["]/gi, "blitz");
 
     responseObject.varContent = blitzed;
 
-    const positionStartHPL = pageContent.indexOf(`id="hplCoverTable"`);
-    const positionEndHPL = pageContent.indexOf(`"table-remove-staffCost hpl"`);
+    const positionStartHPL = pageContent.indexOf(`id="table_hpl"`);
+    const positionEndHPL = pageContent.indexOf(`id="staffCostIds_hpl_removed"`);
     const extractedHPL = pageContent.substring(
       positionStartHPL,
       positionEndHPL
